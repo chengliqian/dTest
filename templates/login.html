@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="UTF-8">
+    <title>登录</title>
+    <style>
+        .error-message {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+      <form id="login_form" action="/"  method="POST">
+          {% csrf_token %}
+          <p>用户名：{{ ulogin.user }}</p>
+          <p>密码：{{ ulogin.pwd }}</p>
+        <button id = "subm" type="button" value="subm" >登录</button>
+      </form>
+      <div >
+          <span class="error-message" id="err_msg"></span>
+      </div>
+      
+      <script src="../static/js/jquery-1.12.4.js"></script>
+      <script src="../static/js/jquery.cookie.js"></script>
+      <script>
+          $(function() {
+              $.ajaxSetup({
+                  beforeSend: function (xhr, settings) {
+                      xhr.setRequestHeader('X-CSRFtoken', $.cookie('csrftoken'));
+                  }
+              });
+
+              $('#subm').click(function () {
+                  var err = $('.error-message');
+                  if (err.length > 0) {
+                      err.remove();
+                  }
+                  $.ajax({
+                      url: "#",
+                      type: "POST",
+                      data: $('#login_form').serialize(),
+                      success: function (data) {
+                          console.log(data);
+                          data = JSON.parse(data);
+                          if (data.status) {
+                              location.href = "/index";
+                          } else {
+                              $.each(data.error, function (k, v) {
+                                  if ('__all__' == k) {
+                                      var s = document.createElement('span');
+                                      s.className = 'error-message';
+                                      s.innerText = v[0].messages;
+                                      $('#subm').after(s);
+                                  } else {
+                                      var tag = document.createElement('span');
+                                      tag.className = 'error-message';
+                                      tag.innerText = v[0].messages;
+                                      $('input[name="' + k + '"]').after(tag);
+                                      $('select[name="' + k + '"]').after(tag)
+                                  }
+                              });
+                              console.log(data.error)
+                          }
+                      }
+                  });
+
+              });
+          });
+      </script>
+
+</body>
+</html>

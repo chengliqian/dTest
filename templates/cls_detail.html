@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>编辑班级信息</title>
+    <style>
+        .error-message {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <form id="edit_form" method="post" >
+         {% csrf_token %}
+         <input name="clsId" value={{cls_select.id}}  type="hidden" />
+         <p>班级名称<input name="clsname" value={{cls_select.clsName}}  type="text" /></p>
+          <p>科目<select name="coursId"  >
+              {% for cs in cos_list %}
+                  {% if cls_select.course.id == cs.id %}
+                     <option value="{{ cs.id }}"  selected="selected">{{ cs.couName }}</option>
+                  {% else %}
+                      <option value="{{ cs.id }}" >{{ cs.couName }}</option>
+                  {% endif %}
+
+              {% endfor %}
+
+
+          </select>
+          </p>
+           <p>开课日期<input name="starttime" value={{ cls_select.startTime|date:"Y-m-d"}}  type="text" /></p>
+           <p>结课日期<input name="endtime" value={{ cls_select.endTime|date:"Y-m-d"}}  type="text" /></p>
+{#        <div class="modal-body">#}
+{##}
+{#            <div class="form-group">#}
+{#                <div class="input-group">#}
+{#                    <div class="input-group-addon">班级名</div>#}
+{#                    <input name="clsname" value={{ cls_select.clsName}} class="form-control" type="text" >#}
+{#                </div>#}
+{#            </div>#}
+{#            <div class="form-group">#}
+{#                <div class="input-group">#}
+{#                    <div class="input-group-addon">开课日期</div>#}
+{#                    <input name="starttime" value={{ cls_select.startTime}} class="form-control" type="text" placeholder="请输入开课日期">#}
+{#                </div>#}
+{#            </div>#}
+{#            <div class="form-group">#}
+{#                <div class="input-group">#}
+{#                    <div class="input-group-addon">结课日期</div>#}
+{#                    <input name="endtime" value={{ cls_select.endTime}} class="form-control" type="text" placeholder="请输入结课日期">#}
+{#                </div>#}
+{#            </div>#}
+{##}
+{#        </div>#}
+        <div class="modal-footer">
+            <a href="/search_cls"><button type="button" class="btn btn-default">取消</button></a>
+            <button id="edit_cls_button" type="button" class="btn btn-primary">确定</button>
+        </div>
+         <div id="all_err"></div>
+    </form>
+
+    <script src="../static/js/jquery-1.12.4.js"></script>
+    <script src="../static/js/jquery.cookie.js"></script>
+    <script>
+        $(function() {
+           $.ajaxSetup({
+                beforeSend: function (xhr, settings) {
+                   xhr.setRequestHeader('X-CSRFtoken', $.cookie('csrftoken'));
+                }
+           });
+          $("#edit_cls_button").click(function () {
+              var err = $('.error-message');
+            if(err.length>0){
+                err.remove();
+            }
+            $.ajax({
+                url: "/edit_cls-{{ cls_select.id }}",
+                type: "POST",
+                data: $('#edit_form').serialize(),
+                success: function (data) {
+                    data = JSON.parse(data);
+                    if (data.status) {
+                        location.href = "/search_cls";
+                    } else {
+                        $.each(data.error,function (k,v) {
+                            if ('__all__' == k) {<!--全局错误提示加在按钮下方-->
+                                var s = document.createElement('span');
+                                s.className = 'error-message';
+                                s.innerText = v[0].messages;
+                                $('#all_err').html(s);
+                            }
+                            else{<!--给字段错误提示加在各字段后面-->
+                                var tag = document.createElement('span');
+                                tag.className = 'error-message';
+                                tag.innerText = v[0].messages;
+                                $('input[name="'+k+'"]').after(tag);
+                                $('select[name="'+k+'"]').after(tag);}
+
+
+                        });
+
+                    }
+                }
+            });
+        });
+        })
+
+    </script>
+</body>
+</html>

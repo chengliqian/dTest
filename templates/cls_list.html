@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>班级管理</title>
+    <style>
+         .hider{
+             display: none;
+         }
+         .shadow{
+             position: fixed;
+             left: 0;right: 0;
+             bottom: 0;top: 0;
+             background-color:silver;
+             z-index: 999;
+             opacity: 0.4
+         }
+         .del_modal{
+             width: 300px;
+             height:200px;
+             z-index:1000;
+             margin-left: 300px;
+             position: fixed;
+             left: 240px;
+             top: 150px;
+             text-align: center
+         }
+
+     </style>
+</head>
+<body>
+
+
+      <h1>班级管理</h1>
+      <form id="search_form"  method="post" action="/search_cls">
+           {% csrf_token %}
+            <span>科目：<select name="coursId" >
+              <option value=0 selected="selected">-----</option>
+              {% for cs in cos_list %}
+                  <option value="{{ cs.id }}" >{{ cs.couName }}</option>
+              {% endfor %}
+            </select></span>
+           <label for="cname">班级名称:</label>
+            <input type="search" name = 'cname' placeholder="请输入班级名称" >
+            <button type="submit">搜索</button>
+            <input type="button" id="download_btn" value="导出数据"/>
+      </form>
+     <div >
+        <a href="/add_cls">
+            <button type="button" >新增班级</button>
+        </a>
+        <!-- <button id="edit_button" type="button" class="btn btn-primary">
+            <i class="fa fa-pencil" aria-hidden="true"></i> 编辑
+        </button>
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#delModal">
+            <i class="fa fa-trash-o" aria-hidden="true"></i> 删除
+        </button>-->
+    </div>
+
+     <table>
+        <tr>
+            <td>班级名称</td>
+            <td>科 目</td>
+            <td>开课日期</td>
+            <td>结课日期</td>
+            <td></td>
+            <td></td>
+        </tr>
+        {% for item in cls_list %}
+        <tr>
+            <td>{{ item.clsName }}</td>
+            <td>{{ item.course }}</td>
+            <td>{{ item.startTime|date:"Y年m月d日" }}</td>
+            <td>{{ item.endTime|date:"Y年m月d日" }}</td>
+            <td><a href="/edit_cls-{{ item.id }}">编辑</a></td>
+            <td><button type="button" class="del_btn"  data-id={{ item.id }}>删除</button></td>
+        </tr>
+        {% endfor %}
+    </table>
+{#     <div>#}
+{#         {{ pager_str }}#}
+{#     </div>#}
+
+       <div  id="delModal"  class="del_modal shadow hider">
+
+                <form id="del_form"  method="post">
+                    <div class="modal-body">
+
+                        是否确认删除该班级？
+                        {#  <input name="delid" type="text" style="display: none">#}
+                    </div>
+                    <div class="input-group">
+                        <input name="clsid" id="delcid"  type="text" style="display: none">
+                        <!--<div class="input-group-addon">班级名</div>
+                        <input name="clsname" id="delcname"  class="form-control" type="text"  readonly = readonly>-->
+                    </div>
+
+                    <div >
+                        <button type="button" id="del_cls_no" class="btn btn-default" data-dismiss="modal">取消</button>
+                        <button  type="button" id="del_cls_yes" class="btn btn-primary">确定</button>
+                    </div>
+                </form>
+            </div>
+
+
+    <script src="../static/js/jquery-1.12.4.js"></script>
+     <script src="../static/js/jquery.cookie.js"></script>
+    <script>
+        $(function() {
+           $.ajaxSetup({
+                beforeSend: function (xhr, settings) {
+                   xhr.setRequestHeader('X-CSRFtoken', $.cookie('csrftoken'));
+                }
+           });
+           $('.del_btn').click(function () {
+              var delcid = $(this).attr("data-id");
+              $('#delModal').removeClass("hider");
+              $('#delcid').attr("value",delcid);
+        });
+{#             <!--ajax请求只是个“字符型”的请求，即请求的内容是以文本类型存放的。#}
+{#             文件的下载是以二进制形式进行的，虽然可以读取到返回的response，#}
+{#             但只是读取而已，是无法执行的，说白点就是js无法调用到浏览器的下载处理机制和程序。#}
+{#             $('#download_btn').click(function () {#}
+{#                  $.ajax({#}
+{#                      url: "/download_cls",#}
+{#                      type: "POST",#}
+{#                      data: $('#search_form').serialize(),#}
+{#                      success: function (data) {#}
+{#                          if (data) {#}
+{#                              location.reload();#}
+{#                              alert("success");#}
+{#                          } else {#}
+{#                              alert(data);#}
+{#                          }#}
+{#                      }#}
+{#                  });#}
+{#             });-->#}
+            $('#download_btn').click(function (){
+                <!--创建隐形form-->
+{#                var  form1 = document.getElementById("search_form");#}
+{#                form_hide = form1.cloneNode(true);#}
+{#                form_hide.id = "download_form";#}
+{#                form_hide.method = "post";#}
+{#                form_hide.action = "/download_cls";#}
+{#                document.body.appendChild(form_hide);#}
+{#                form_hide.action = "/download_cls";#}
+                var form_hide = document.createElement("form");
+                console.log(form_hide);
+                form_hide.id = "download_form";
+                form_hide.name = "form_download";
+                form_hide.method = "post";
+                form_hide.action = "/download_cls";
+                form_hide.style.display="none";
+                document.body.appendChild(form_hide);
+                <!--var cour_select = $('select[name="coursId"]');不是节点元素-->
+                var cours1 = document.getElementsByName("coursId")[0];
+                var index = cours1.selectedIndex;
+                var cour_select = cours1.cloneNode(true);
+                cour_select.name = "coursId1";
+                cour_select.selectedIndex = index;
+                console.log(cour_select);
+                form_hide.appendChild(cour_select);
+
+                <!--var name_clas = $('input[name="cname"]');-->
+                var clas1 = document.getElementsByName("cname")[0];
+                var v = clas1.value;
+                var name_clas = clas1.cloneNode(true);
+                name_clas.name = "cname1";
+                name_clas.value=v;
+                console.log(name_clas);
+                form_hide.appendChild(name_clas);
+                <!--var btn_download = $(this);-->
+{#                var btn_download = document.getElementById("download_btn");#}
+{#                console.log(btn_download);#}
+{#                form_hide.appendChild(btn_download);#}
+
+                var csrf = document.getElementsByName("csrfmiddlewaretoken")[0];
+                var csrf1 = csrf.cloneNode(true);
+                console.log(csrf);
+                form_hide.appendChild(csrf1);
+                console.log(form_hide);
+                form_hide.submit();
+                document.body.removeChild(form_hide);
+
+            });
+
+
+
+           $('#del_cls_yes').click(function () {
+            $.ajax({
+                url: "/delete_cls",
+                type: "POST",
+                data: $('#del_form').serialize(),
+                success: function (data) {
+                    if (data == "OK") {
+                        location.reload();
+                    } else {
+                        alert(data);
+                    }
+                }
+            });
+
+        });
+           $('#del_cls_no').click(function () {
+             $('#delModal').addClass("hider");
+
+             });
+        });
+
+    </script>
+</body>
+</html>

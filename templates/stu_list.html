@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="UTF-8">
+    <title>学员管理</title>
+    <style>
+         .hider{
+             display: none;
+         }
+         .shadow{
+             position: fixed;
+             left: 0;right: 0;
+             bottom: 0;top: 0;
+             background-color:silver;
+             z-index: 999;
+             opacity: 1.0
+         }
+         .del_modal{
+             width: 300px;
+             height:200px;
+             z-index:1000;
+             margin-left: 300px;
+             position: fixed;
+             left: 240px;
+             top: 150px;
+             text-align: center
+         }
+
+     </style>
+</head>
+<body>
+    <h1>学员管理</h1>
+      <form method="post" action="/search_stu">
+          {% csrf_token %}
+          <div>
+            <span>科目：<select name="coursId"  onchange="getClasOption(this.options[selectedIndex].value)">
+              <option value=0 selected="selected">-----</option>
+              {% for cs in cos_list %}
+                <option value="{{ cs.id }}" >{{ cs.couName }}</option>
+              {% endfor %}
+          </select></span>
+          <span>班级：<select name="clsId" id="clsId" >
+                <option value=0 selected="selected">-----</option>
+{#              {% for cls in cls_list %}#}
+{#                <option value="{{ cls.id }}" >{{ cls.clsName }}</option>#}
+{#              {% endfor %}#}
+          </select></span>
+            <label for="sname">学生姓名:</label>
+            <input id="sname" type="search" name = 'sname' placeholder="请输入学员姓名" >
+              <label for="sqq">QQ号:</label>
+            <input id="sqq" type="search" name = 'sqq' placeholder="请输入QQ号" >
+               <label for="sphone">电话号码:</label>
+            <input id="sphone" type="search" name = 'sphone' placeholder="请输入电话号码" >
+            <button type="submit">搜索</button>
+          </div>
+      </form>
+
+      <div>
+        <a href="/add_stu">
+            <button type="button">新增学员</button>
+        </a>
+        <!-- <button id="edit_button" type="button" class="btn btn-primary">
+            <i class="fa fa-pencil" aria-hidden="true"></i> 编辑
+        </button>
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#delModal">
+            <i class="fa fa-trash-o" aria-hidden="true"></i> 删除
+        </button>-->
+    </div>
+
+     <table>
+        <tr>
+            <td>学员姓名</td>
+            <td>手机号</td>
+            <td>QQ号</td>
+            <td>课程类型</td>
+            <td>班级</td>
+            <td>班级类型</td>
+            <td>推荐人</td>
+            <td>应交学费</td>
+            <td>已交学费</td>
+            <td></td>
+            <td></td>
+
+        </tr>
+        {% for item in stu_list %}
+        <tr>
+            <td>{{ item.name }}</td>
+            <td>{{ item.phoneNo }}</td>
+            <td>{{ item.qqNo }}</td>
+            <td>{{ item.couId }}</td>
+            <td>{{ item.clsId }}</td>
+            <td>{{ item.get_clsType_display }}</td>
+            <td>{{ item.recommender.name }}</td>
+            <td>{{ item.tuition_total }}</td>
+            <td>{{ item.tuition_paid }}</td>
+            <td><a href="/edit_stu-{{ item.id }}">编辑</a></td>
+            <td><button type="button" class="del_btn"  data-id={{ item.id }}>删除</button></td>
+        </tr>
+        {% endfor %}
+    </table>
+{#    <div>#}
+{#        {{ pager_str }}#}
+{#    </div>#}
+    <div  id="delModal"  class=" del_modal shadow hider">
+                <form id="del_form"  method="post">
+                    <div class="modal-body">
+                        确定删除该学生？
+                        {#  <input name="delid" type="text" style="display: none">#}
+                    </div>
+                    <div class="input-group">
+                        <input name="stuid" id="delsid"  type="text" style="display: none">
+                        <!--<div class="input-group-addon">班级名</div>
+                        <input name="clsname" id="delcname"  class="form-control" type="text"  readonly = readonly>-->
+                    </div>
+                    <div >
+                        <button type="button" id="del_stu_no" >取消</button>
+                        <button type="button" id="del_stu_yes" >确定</button>
+                    </div>
+                </form>
+            </div>
+
+    <script src="../static/js/jquery-1.12.4.js"></script>
+    <script src="../static/js/jquery.cookie.js"></script>
+    <script>
+        $(function() {
+              $.ajaxSetup({
+                  beforeSend: function (xhr, settings) {
+                      xhr.setRequestHeader('X-CSRFtoken', $.cookie('csrftoken'));
+                  }
+              });
+              $('.del_btn').click(function (){
+                  var delsid = $(this).attr("data-id");
+                  $('#delModal').removeClass("hider");
+                  $('#delsid').attr("value",delsid);
+              });
+              $('#del_stu_yes').click(function () {
+                   $.ajax({
+                        url: "/delete_stu",
+                        type: "POST",
+                        data: $('#del_form').serialize(),
+                        success: function (data) {
+                                 if (data == "OK") {
+                                        location.reload();
+                                 } else {
+                                     alert(data);
+                                 }
+                        }
+                   });
+
+              });
+              $('#del_stu_no').click(function () {
+                  $('#delModal').addClass("hider");
+
+             });
+        });
+              function getClasOption(coursId){
+                  $.ajax({
+                      url:"/clas_select/"+coursId,
+                      type:"GET",
+                      dataType:'json',
+                      success:function (data) {
+                     var cls = $("#clsId").get(0);
+                     {# console.log("cls select:",cls);#}
+                     var cls_length = cls.options.length;
+                     if(cls_length>0){
+                         for (var i=cls.length-1;i>-1;i--){
+                              cls.options[i]=null;
+                         }
+                         cls.options[0]=new Option("-----",0);
+                     }
+                     if(data.length>0){
+                         console.log("------->",data,data.length);
+                         for(var j=1;j<=data.length;j++){
+                             cls.options[j]=new Option(data[j-1].cname,data[j-1].cid);
+{#                             cls.options[j].text = data[j].cname;#}
+{#                             cls.options[j].value = data[j].cid;#}
+                         }
+                     }
+                 }
+             });
+         }
+
+    </script>
+</body>
+</html>

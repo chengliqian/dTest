@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>课程</title>
+     <style>
+          .error-message {
+            color: red;
+        }
+         .hider{
+             display: none;
+         }
+         .shadow{
+             position: fixed;
+             left: 0;right: 0;
+             bottom: 0;top: 0;
+             background-color:silver;
+             z-index: 999;
+             opacity: 1.0
+         }
+         .del_modal{
+             width: 300px;
+             height:200px;
+             z-index:1000;
+             margin-left: 300px;
+             position: fixed;
+             left: 240px;
+             top: 150px;
+             text-align: center
+         }
+         .edit_modal{
+             width: 300px;
+             height:180px;
+             z-index:1000;
+             margin-left: 300px;
+             position: fixed;
+             left: 240px;
+             top: 150px;
+             text-align: center
+         }
+         .add_modal{
+             width: 300px;
+             height:180px;
+             z-index:1000;
+             margin-left: 300px;
+             position: fixed;
+             left: 240px;
+             top: 150px;
+             text-align: center
+         }
+
+     </style>
+</head>
+<body>
+  <form method="post" action="/search_course/">
+           {% csrf_token %}
+           <label for="cname">课程名称:</label>
+            <input type="search" name = 'cname' placeholder="请输入课程名称" >
+            <button type="submit">搜索</button>
+  </form>
+  <div>
+      <button type="button" id = "add_course">新增课程</button>
+  </div>
+   <table>
+        <tr>
+            <td>课程编码</td>
+            <td>课程名称</td>
+            <td></td>
+            <td></td>
+        </tr>
+       {% for item in cou_list %}
+        <tr>
+            <td>{{ item.id }}</td>
+            <td>{{ item.couName }}</td>
+{#            <td><a href="/edit_cls-{{ item.id }}">编辑</a></td>#}
+            <td><button type="button" class="edit_btn"  data-id={{ item.id }} data-name={{ item.couName }}>编辑</button></td>
+            <td><button type="button" class="del_btn"  data-id={{ item.id }} data-name={{ item.couName }} >删除</button></td>
+        </tr>
+        {% endfor %}
+   </table>
+   <!--删除课程模态对话框-->
+   <div  id="delModal"  class="del_modal shadow hider">
+
+                <form id="del_form"  method="post">
+                    {% csrf_token %}
+                    <div >
+                        是否确认删除该课程？
+                        {#  <input name="delid" type="text" style="display: none">#}
+                    </div>
+                    <div class="input-group">
+                        <input name="couid" id="delcid"  type="text" style="display: none ">
+                        <!--<div class="input-group-addon">班级名</div>-->
+                        <label for="cousname">课程名称</label>
+                        <input name="cousname" id="delcname"  type="text"  readonly = readonly style="border-style: none">
+                    </div>
+                    <div >
+                        <button type="button" id="del_cours_no" >取消</button>
+                        <button  type="button" id="del_cours_yes" >确定</button>
+                    </div>
+                </form>
+            </div>
+
+  <!--编辑课程模态对话框-->
+   <div  id="editModal"  class="edit_modal shadow hider">
+                <form id="edit_form"  method="post">
+                    {% csrf_token %}
+                    <div>修改课程名称</div>
+                    <div class="input-group">
+                        <input name="couid" id="editcid"  type="text" style="display: none ">
+                        <!--<div class="input-group-addon">班级名</div>-->
+                        <label for="cousname">课程名称</label>
+                        <input name="coursname" id="editcname"  type="text"  >
+                    </div>
+                    <div >
+                        <button type="button" id="edit_cours_no" >取消</button>
+                        <button  type="button" id="edit_cours_yes" >确定</button>
+                    </div>
+                </form>
+   </div>
+
+  <!--新增课程模态对话框-->
+   <div  id="addModal"  class="add_modal shadow hider">
+                <form id="add_form"  method="post">
+                    {% csrf_token %}
+                    <div>新增课程</div>
+                    <div class="input-group">
+                        <!--<div class="input-group-addon">班级名</div>-->
+                        <label for="coursname">课程名称</label>
+                        <input name="coursname" id="addcname"  type="text"  >
+                    </div>
+                    <div >
+                        <button type="button" id="add_cours_no" >取消</button>
+                        <button  type="button" id="add_cours_yes" >确定</button>
+                    </div>
+                </form>
+   </div>
+
+          <script src="../static/js/jquery-1.12.4.js"></script>
+          <script src="../static/js/jquery.cookie.js"></script>
+          <script>
+               $(function() {
+                  $.ajaxSetup({
+                      beforeSend: function (xhr, settings) {
+                      xhr.setRequestHeader('X-CSRFtoken', $.cookie('csrftoken'));
+                      }
+                  });
+
+                   <!--删除按钮-->
+                   $('.del_btn').click(function () {
+                       var delcid = $(this).attr("data-id");
+                       var delcname = $(this).attr("data-name");
+                       $('#delModal').removeClass("hider");
+                       $('#delcid').attr("value",delcid);
+                       $('#delcname').attr("value",delcname);
+                   });
+
+                    <!--确认删除按钮-->
+                   $('#del_cours_yes').click(function () {
+                      $.ajax({
+                      url: "/del_course",
+                      type: "POST",
+                      data: $('#del_form').serialize(),
+                      success: function (data) {
+                          if (data == "OK") {
+                            location.reload();
+                         } else {
+                            alert(data);
+                         }
+                      }
+                   });
+                });
+
+                   <!--取消删除按钮-->
+                 $('#del_cours_no').click(function () {
+                      $('#delModal').addClass("hider");
+
+                  });
+
+                   <!--编辑按钮-->
+                   $('.edit_btn').click(function () {
+                       var err = $('.error-message');
+                       if(err.length>0){
+                           err.remove();
+                       }
+                       var editcid = $(this).attr("data-id");
+                       var editcname = $(this).attr("data-name");
+                       $('#editModal').removeClass("hider");
+                       $('#editcid').attr("value",editcid);
+                       $('#editcname').attr("value",editcname);
+                   });
+
+                   <!--编辑提交按钮-->
+                   $('#edit_cours_yes').click(function () {
+                      $.ajax({
+                      url: "/edit_course",
+                      type: "POST",
+                      data: $('#edit_form').serialize(),
+                      success: function (data) {
+                          data = JSON.parse(data);
+                          if (data.status) {
+                            location.reload();
+                         } else {
+                             $.each(data.error, function (k, v) {
+                                 var tag = document.createElement('span');
+                                 tag.className = 'error-message';
+                                 tag.innerText = v[0].messages;
+                                 $('#editcname').after(tag);
+                             });
+                         }
+                      }
+                   });
+                });
+
+                   <!--编辑取消按钮-->
+                   $('#edit_cours_no').click(function () {
+                      $('#editModal').addClass("hider");
+                       location.reload()
+
+                  });
+
+                   <!--新增课程按钮-->
+                   $('#add_course').click(function () {
+                       $('#addModal').removeClass("hider");
+                       var err = $('.error-message');
+                       if(err.length>0){
+                           err.remove();
+                       }
+                   });
+
+                   <!--添加确认按钮-->
+                    $('#add_cours_yes').click(function () {
+                        var err = $('.error-message');
+                       if(err.length>0){
+                           err.remove();
+                       }
+                      $.ajax({
+                         url: "/add_course",
+                         type: "POST",
+                         data: $('#add_form').serialize(),
+                         success: function (data) {
+                              data = JSON.parse(data);
+                              if (data.status) {
+                                  location.reload();
+                              } else {
+                                  $.each(data.error, function (k, v) {
+                                       var tag = document.createElement('span');
+                                       tag.className = 'error-message';
+                                       tag.innerText = v[0].messages;
+                                       $('#addcname').after(tag);
+                                  });
+                              }
+                         }
+                   });
+                });
+
+                   <!--添加取消按钮-->
+                   $('#add_cours_no').click(function () {
+                      $('#addModal').addClass("hider");
+                       location.reload()
+
+                  });
+
+             })
+         </script>
+
+
+
+</body>
+</html>

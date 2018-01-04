@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>新增学员</title>
+    <style>
+        .error-message {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+
+     <div>
+
+     </div>
+     <form id="add_form" method="post" action="add_cls.html">
+         {% csrf_token %}
+        {# <p>学号{{ stu.stuno }}</p>#}
+          <p>学生姓名{{ stu.stuname }}</p>
+          <p>手机号{{ stu.phone }}</p>
+          <p>QQ号{{ stu.qq }}</p>
+          <p>科目{{ stu.coursId }}</p>
+          <p>班级{{ stu.clsId }}
+{#              {% if res.error.clsId %}#}
+{#                  console.log({{ res.error.clsId.0 }})#}
+{#                  <span class="error-message">{{ stu.errors.clsId.0}}</span>#}
+{#              {% endif %}#}
+          </p>
+          <p>班级类型{{ stu.clstype }}</p>
+          <p>应交学费{{ stu.tu_total }}</p>
+          <p>已交学费{{ stu.tu_paid }}</p>
+          <p>是否推荐{{ stu.is_recom }}</p>
+          <p>推荐人{{ stu.recom}}</p>
+         <p>
+             <button id="add_stu_button" type="button" >确定</button>
+             <button id="add_cancel" type="button" >取消</button>
+         </p>
+{#         <p>#}
+{#             <span class="error_msg" id="error_msg">{{ error_msg}}</span>#}
+{#         </p>#}
+    </form>
+
+     <script src="../static/js/jquery-1.12.4.js"></script>
+     <script src="../static/js/jquery.cookie.js"></script>
+     <script>
+         $(function() {
+             $.ajaxSetup({
+                 beforeSend: function (xhr, settings) {
+                     xhr.setRequestHeader('X-CSRFtoken', $.cookie('csrftoken'));
+                 }
+             });
+             $("#add_stu_button").click(function () {
+                 var err = $('.error-message');
+                 if (err.length > 0) {
+                     err.remove();
+                 }
+                 $.ajax({
+                     url: "#",
+                     type: "POST",
+                     data: $('#add_form').serialize(),
+                     success: function (data) {
+                         console.log(data);
+                         data = JSON.parse(data);
+                         if (data.status) {
+                             location.href = "/search_stu";
+                         } else {
+                             $.each(data.error, function (k, v) {
+                                 var tag = document.createElement('span');
+                                 tag.className = 'error-message';
+                                 tag.innerText = v[0].messages;
+                                 $('input[name="' + k + '"]').after(tag);
+                                 $('select[name="' + k + '"]').after(tag)
+
+                             });
+                             console.log(data.error)
+                         }
+                     }
+                 });
+             });
+             $("#add_cancel").click(function () {
+                 window.location.href = '/search_stu'
+
+             });
+         });
+
+         <!--班级与所选课程联动显示-->
+         function getClasOption(coursId){
+             <!--根据课程id 查询该课程关联的班级-->
+             $.ajax({
+                 url:"/clas_select/"+coursId,
+                 type:"GET",
+                 dataType:'json',
+                 success:function (data) {
+                     var cls = $("#id_clsId").get(0);
+                     {# console.log("cls select:",cls);#}
+                     var cls_length = cls.options.length;
+                     if(cls_length>0){
+                         for (var i=cls.length-1;i>-1;i--){
+                              cls.options[i]=null;<!--清空当前的班级选项-->
+                         }
+                         cls.options[0]=new Option("-----","");<!--默认项-->
+                     }
+                     if(data.length>0){
+                         for(var j=1;j<=data.length;j++){
+                             <!--将新查询的班级选项展示到下拉列表-->
+                             cls.options[j]=new Option(data[j-1].cname,data[j-1].cid);
+{#                             cls.options[j].text = data[j].cname;#}
+{#                             cls.options[j].value = data[j].cid;#}
+                         }
+                     }
+                 }
+             })
+         }
+     </script>
+
+</body>
+</html>

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>新增班级</title>
+    <style>
+        .error-message {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <form id="add_form" method="post" action="add_cls.html">
+        {% csrf_token %}
+        <p>{{ cls_obj.clsId }}</p>
+        <p>班级名称{{ cls_obj.clsname }}</p>
+        <p>科目{{ cls_obj.coursId }}</p>
+        <p>开课日期{{ cls_obj.starttime }}</p>
+        <p>结课日期{{ cls_obj.endtime }}</p>
+
+{#        <p><input type="hidden" name="op" value="add"></p>#}
+
+{#        <div class="modal-body">#}
+{##}
+{#            <div class="form-group">#}
+{#                <div class="input-group">#}
+{#                    <div class="input-group-addon">班级名</div>#}
+{#                    <input name="clsname" class="form-control" type="text" placeholder="请输入班级名">#}
+{##}
+{#                </div>#}
+{#            </div>#}
+{#            <div class="form-group">#}
+{#                <div class="input-group">#}
+{#                    <div class="input-group-addon">开课日期</div>#}
+{#                    <input name="starttime" class="form-control" type="text" placeholder="请输入开课日期">#}
+{#                </div>#}
+{#            </div>#}
+{#            <div class="form-group">#}
+{#                <div class="input-group">#}
+{#                    <div class="input-group-addon">结课日期</div>#}
+{#                    <input name="endtime" class="form-control" type="text" placeholder="请输入结课日期">#}
+{#                </div>#}
+{#            </div>#}
+{##}
+{#        </div>#}
+        <div class="modal-footer">
+            <a href="/search_cls"><button type="button" class="btn btn-default">取消</button></a>
+            <button id="add_cls_button" type="button" class="btn btn-primary">确定</button>
+        </div>
+         <div id="all_err">
+        </div>
+    </form>
+
+    <script src="../static/js/jquery-1.12.4.js"></script>
+    <script src="../static/js/jquery.cookie.js"></script>
+    <script>
+        $(function() {
+           $.ajaxSetup({
+                beforeSend: function (xhr, settings) {
+                   xhr.setRequestHeader('X-CSRFtoken', $.cookie('csrftoken'));
+                }
+           });
+           $("#add_cls_button").click(function () {
+              var err = $('.error-message');
+            if(err.length>0){
+                err.remove();<!--防止每点击一次，重复出现一次错误提示-->
+            }
+            $.ajax({
+                url: "#",
+                type: "POST",
+                data: $('#add_form').serialize(),
+                success: function (data) {
+                    data = JSON.parse(data);
+                    if (data.status) {
+                        location.href = "/search_cls";
+                    } else {
+                        $.each(data.error,function (k,v) {<!--返回的错误信息，添加到相应字段后面-->
+                            if ('__all__' == k) {
+                                var s = document.createElement('span');
+                                s.className = 'error-message';
+                                s.innerText = v[0].messages;
+                                $('#all_err').html(s);
+                            }else{
+                                var tag = document.createElement('span');
+                                tag.className = 'error-message';
+                                tag.innerText = v[0].messages;
+                                $('input[name="'+k+'"]').after(tag);
+                                $('select[name="'+k+'"]').after(tag);
+                            }
+
+                        });
+{#                        if(data.error.clsname){#}
+{#                            $('#error_msg').text(data.error.clsname[0].messages);#}
+{#                        }else{#}
+{#                            if(data.error.starttime){#}
+{#                                $('#error_msg').text(data.error.starttime[0].messages);#}
+{#                            }else{#}
+{#                            if(data.error.endtime){#}
+{#                                $('#error_msg').text(data.error.endtime[0].messages);#}
+{#                            }else{#}
+{#                                $('#error_msg').text(data.error);#}
+{#                            }#}
+{#                        }#}
+{#                        }#}
+
+                    }
+                }
+            });
+         });
+        })
+
+    </script>
+
+</body>
+</html>

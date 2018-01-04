@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>编辑学员信息</title>
+     <style>
+        .error-message {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+     <form id="edit_form" method="post" >
+          {% csrf_token %}
+        {# <p>学号{{ stu.stuno }}</p>#}
+          <p>学生姓名<input name="stuname" value={{ stu_select.name}}  type="text" /></p>
+          <p>手机号<input name="phone" value={{ stu_select.phoneNo }}  type="text" /></p>
+          <p>QQ号<input name="qq" value={{ stu_select.qqNo }}  type="text" /></p>
+          <p>科目<select name="coursId"  onchange="getClasOption(this.options[selectedIndex].value)">
+              {% for cs in cos_list %}
+                  {% if stu_select.couId.id == cs.id %}
+                     <option value="{{ cs.id }}"  selected="selected">{{ cs.couName }}</option>
+                  {% else %}
+                      <option value="{{ cs.id }}" >{{ cs.couName }}</option>
+                  {% endif %}
+              {% endfor %}
+
+          </select>
+          </p>
+          <p>班级<select name="clsId" id="clsId">
+              {% for cls in cls_list %}
+                  {% if stu_select.clsId.id == cls.id %}<!--默认显示所选课程的关联班级-->
+                     <option value="{{ cls.id }}" selected="selected">{{ cls.clsName }}</option>
+                  {% elif cls.course.id == stu_select.couId.id %}
+                      <option value="{{ cls.id }}" >{{ cls.clsName }}</option>
+                  {% endif %}
+              {% endfor %}
+          </select></p>
+          <p>班级类型<select name="clstype" >
+              {% for ct in cls_type %}
+                  {% if ct.id == stu_select.clsType %}
+                      <option value="{{ ct.id }}" selected = "selected">{{ ct.txt }}</option>
+                  {% else %}
+                      <option value="{{ ct.id }}">{{ ct.txt }}</option>
+                  {% endif %}
+              {% endfor %}
+          </select>
+          </p>
+          <p>应交学费<input name="tu_total" value={{ stu_select.tuition_total }}  type="number" /></p>
+          <p>已交学费<input name="tu_paid" value={{ stu_select.tuition_paid }}  type="number" /></p>
+          <p>是否推荐<select name="is_recom" >
+              {% for ir in is_re %}
+                  {% if ir.id == stu_select.isRecommended %}
+                      <option value="{{ ir.id }}" selected = "selected">{{ ir.txt }}</option>
+                  {% else %}
+                      <option value="{{ ir.id }}" >{{ ir.txt }}</option>
+                  {% endif %}
+              {% endfor %}
+          </select>
+          </p>
+          <p>推荐人
+              {% if stu_select.recommender %}
+                  <input name="recom" value={{ stu_select.recommender }}  type="text" />
+              {% else %}
+                  <input name="recom"  type="text" />
+              {% endif %}
+          </p>
+         <p>
+             <button id="edit_stu_btn" type="button" >提交</button>
+             <button id="edit_cancel" type="button" >取消</button>
+         </p>
+{#         <p>#}
+{#             <span class="error_msg" id="error_msg">{{ error_msg}}</span>#}
+{#         </p>#}
+    </form>
+    <script src="../static/js/jquery-1.12.4.js"></script>
+     <script src="../static/js/jquery.cookie.js"></script>
+    <script>
+         $(function() {
+             $.ajaxSetup({
+                 beforeSend: function (xhr, settings) {
+                     xhr.setRequestHeader('X-CSRFtoken', $.cookie('csrftoken'));
+                 }
+             });
+             $("#edit_stu_btn").click(function () {
+                 var err = $('.error-message');
+                 if (err.length > 0) {
+                     err.remove();
+                 }
+                 $.ajax({
+                     url: "/edit_stu-{{ stu_select.id }}",
+                     type: "POST",
+                     data: $('#edit_form').serialize(),
+                     success: function (data) {
+                         data = JSON.parse(data);
+                         if (data.status) {
+                             window.location.href = "/search_stu";
+                         } else {
+                             $.each(data.error, function (k, v) {
+                                 var tag = document.createElement('span');
+                                 tag.className = 'error-message';
+                                 tag.innerText = v[0].messages;
+                                 $('input[name="' + k + '"]').after(tag);
+                                 $('select[name="' + k + '"]').after(tag);
+                             });
+                         }
+                     }
+                 });
+             });
+             $("#edit_cancel").click(function () {
+                 window.location.href = '/search_stu'
+             });
+         });
+
+        function getClasOption(coursId){
+             $.ajax({
+                 url:"/clas_select/"+coursId,
+                 type:"GET",
+                 dataType:'json',
+                 success:function (data) {
+                     var cls = $("#clsId").get(0);
+                     {# console.log("cls select:",cls);#}
+                     var cls_length = cls.options.length;
+                     if(cls_length>0){
+                         for (var i=cls.length-1;i>-1;i--){
+                              cls.options[i]=null;
+                         }
+                         cls.options[0]=new Option("-----","");
+                     }
+                     if(data.length>0){
+                         console.log("------->",data,data.length);
+                         for(var j=1;j<=data.length;j++){
+                             cls.options[j]=new Option(data[j-1].cname,data[j-1].cid);
+{#                             cls.options[j].text = data[j].cname;#}
+{#                             cls.options[j].value = data[j].cid;#}
+                         }
+                     }
+                 }
+             })
+         }
+    </script>
+
+</body>
+</html>
